@@ -2,20 +2,14 @@ package testing;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import application.*;
 import org.junit.jupiter.api.Test;
-
-import application.DataManager;
-import application.InputManager;
-import application.KeyManager;
-import application.Logger;
-import application.LoginManager;
-import application.PwData;
 
 
 class DataManagerTest {
-	DataManager dm;
-	LoginManager lm;
-	KeyManager km;
+	private DataManager dm;
+	private LoginManager lm;
+	private KeyManager km;
 	
 	@Test
 	void test1_add_sort_getall() throws Exception {
@@ -25,7 +19,7 @@ class DataManagerTest {
 		for (PwData data : dm.getAllData()) {
 			System.out.println(data.toString());
 		}
-		assertEquals(true, true);
+		assertTrue(true);
 	}
 	
 	
@@ -50,7 +44,7 @@ class DataManagerTest {
 	void test3_save_file() throws Exception {
 		Logger.debug(this,"Begin test3_save_file");
 		km = KeyManager.getInstance();
-		km.load();
+		km.getSalt();
 		lm = LoginManager.getInstance();
 		lm.sendPasswordToKeyManager("password".getBytes());
 		dm = DataManager.getInstance();
@@ -83,7 +77,7 @@ class DataManagerTest {
 		dm = DataManager.getInstance();
 		dm.loadData();
 		for (PwData data : dm.getAllData()) {
-			data.toString();
+			System.out.println(data.toString());
 		}
 	}
 	
@@ -123,32 +117,36 @@ class DataManagerTest {
 	private void populateDataManager() throws InterruptedException {
 		Logger.debug(this,"populateDataManager");
 		PwData data1 = new PwData();
-		data1.platform("platformA");
-		data1.login("LoginA");
-		data1.pass("SecretA");
+		data1.setPlatform("linkedin.com");
+		data1.setLogin("useryou@umail.com");
+		data1.setPass("linkedinpassword");
 		PwData data5 = new PwData();
-		data5.platform("platformB");
-		data5.login("LoginA");
-		data5.pass("SecretZ");
+		data5.setPlatform("gmail.com");
+		data5.setLogin("basicuser@gmail.com");
+		data5.setPass("reallylongpassword");
 		Thread.sleep(10);
 		PwData data2 = new PwData();
-		data2.platform("platformB");
-		data2.login("LoginB");
-		data2.pass("SecretA");
+		data2.setPlatform("csulb.edu");
+		data2.setLogin("student.name@csulb.edu");
+		data2.setPass("Fdi21edEdcS");
 		PwData data3 = new PwData();
-		data3.platform("platformC");
-		data3.login("LoginC");
-		data3.pass("SecretC");
+		data3.setPlatform("sandwiches.com");
+		data3.setLogin("iluvsandwiches");
+		data3.setPass("especiallywithmayo");
 		PwData data4 = new PwData();
-		data4.platform("platformB");
-		data4.login("LoginA");
-		data4.pass("SecretA");
+		data4.setPlatform("nocreativity.com");
+		data4.setLogin("randomlogin");
+		data4.setPass("withnotsorandompassword");
+		dm = DataManager.getInstance();
 		dm.add(data1);
 		dm.add(data2);
 		dm.add(data3);
 		dm.add(data4);
 		dm.add(data5);
 		dm.sort();
+		for (Object datum : dm.getAllData()){
+			Logger.log(datum.toString());
+		}
 	}
 	
 	private void initiateKeyLoginManager() throws Exception {
@@ -169,12 +167,12 @@ class DataManagerTest {
 	private PwData createCredential(String plat, String login, String pass) {
 		Logger.debug(this,"createCredential");
 		PwData data = new PwData();
-		data.platform(plat);
-		data.login(login);
-		data.pass(pass);
+		data.setPlatform(plat);
+		data.setLogin(login);
+		data.setPass(pass);
 		return data;
 	}
-	
+
 	private void addCredentialToDM(Object data) {
 		Logger.debug(this,"addCredentialToDM");
 		if (dm.add((PwData)data)) {

@@ -1,10 +1,16 @@
 package application;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
 public class EncryptionManager {
 	private static EncryptionManager _encryptionManager = null;
@@ -13,7 +19,7 @@ public class EncryptionManager {
 		Logger.debug(this, "constructor");
 	}
 	
-	public static EncryptionManager getInstance() throws Exception {
+	public static EncryptionManager getInstance() {
 		if (_encryptionManager == null) {
 			_encryptionManager = new EncryptionManager();
 		} 
@@ -25,7 +31,9 @@ public class EncryptionManager {
 		return Encrypter.getInstance().encrypt(bytes);
 	}
 	
-	public byte[] decrypt(EncryptedPacket encryptedPacket) throws Exception {
+	public byte[] decrypt(EncryptedPacket encryptedPacket) throws BadPaddingException,
+			IllegalBlockSizeException, NoSuchAlgorithmException, NoSuchPaddingException,
+			InvalidAlgorithmParameterException, InvalidKeyException, IOException {
 		Logger.debug(this, "decrypt");
 		return Decrypter.getInstance().decrypt(encryptedPacket);
 	}
@@ -39,7 +47,8 @@ public class EncryptionManager {
 		return byteArrayOS.toByteArray();
 	}
 	
-	public EncryptedPacket convertToEncryptedPacket(byte[] bytes) throws IOException, ClassNotFoundException {
+	public EncryptedPacket convertToEncryptedPacket(byte[] bytes)
+			throws IOException, ClassNotFoundException {
 		Logger.debug(this, "convertToEncryptedPacket");
 		ByteArrayInputStream byteArrayIS = new ByteArrayInputStream(bytes);
 		ObjectInputStream objectIS = new ObjectInputStream(byteArrayIS);

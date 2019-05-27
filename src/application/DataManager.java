@@ -1,23 +1,29 @@
 package application;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.Vector;
 
 @SuppressWarnings("serial")
 public class DataManager implements Serializable {
 	private static DataManager _dataManager = null;
-	private Vector<PwData> _data = null;
+	private Vector<PwData> _data;
 	private String _dataFileName = "data.storage";
 	
 	private DataManager() {
 		Logger.debug(this, "Constructor");
-		_data = new Vector<PwData>();
+		_data = new Vector<>();
 	}
 	
 	public static DataManager getInstance() {
@@ -36,6 +42,9 @@ public class DataManager implements Serializable {
 		}
 		_data.addElement(data);
 		sort();
+//		for (PwData datum : _data){
+//			Logger.log("\n" + datum.toString());
+//		}
 		return true;
 	}
 	
@@ -48,7 +57,7 @@ public class DataManager implements Serializable {
 		Logger.debug(this, "findByPlatform");
 		Vector<PwData>container = new Vector<PwData>();
 		for(PwData data : _data) {
-			if (data.platform().equals(platform))
+			if (data.getPlatform().equals(platform))
 				container.add(data);
 		}
 		return container;
@@ -66,6 +75,7 @@ public class DataManager implements Serializable {
 	
 	public Vector<PwData> getAllData() {
 		Logger.debug(this, "getAllData");
+		Logger.debug(this, "\n" + _data.toString());
 		return _data;
 	}
 	
@@ -99,7 +109,9 @@ public class DataManager implements Serializable {
 	}
 	
 	/** Retrieves file from disk drive */
-	public void loadData() throws Exception {
+	public void loadData() throws IOException, ClassNotFoundException, BadPaddingException,
+			InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException,
+			NoSuchPaddingException, InvalidAlgorithmParameterException {
 		Logger.debug(this, "loadData");
 		EncryptionManager em = EncryptionManager.getInstance(); // TODO: decouple
 		byte[] data = FileManager.getInstance().readData(_dataFileName);
@@ -110,22 +122,36 @@ public class DataManager implements Serializable {
 		Logger.debug(this, "length == " + data.length);
 		data = em.decrypt(em.convertToEncryptedPacket(data));
 		_dataManager._data = convertToDataManager(data)._data;
+		Logger.debug(this, "TIME TO PRINT DECRYPTED DATA!!!");
+		for (Object datum : _data){
+			Logger.log(datum.toString());
+		}
+		Logger.debug(this, "DID IT PRINT ANYTHING?!?!");
 	}
 	
 	/** Nullifies data in container*/
 	public void destroyData() {
 		for (PwData data : _data) {
-			data.platform(new String(new char[data.platform().length()]));
-			data.platform(null);
-			data.login(new String(new char[data.login().length()]));
-			data.login(null);
-			data.pass(new String(new char[data.pass().length()]));
-			data.pass(null);
+			data.setPlatform(new String(new char[data.getPlatform().length()]));
+			data.setPlatform(null);
+			data.setLogin(new String(new char[data.getLogin().length()]));
+			data.setLogin(null);
+			data.setPass(new String(new char[data.getPass().length()]));
+			data.setPass(null);
 		}
 	}
 
-	public String getDataFileName(){
-		return _dataFileName;
+//	public String getDataFileName(){
+//		return _dataFileName;
+//	}
+//
+//	public boolean dataExists() {
+//		Logger.debug(this, "dataExists");
+//		return FileManager.getInstance().fileExists(_dataFileName);
+//	}
+
+	public void createFileIfNotExist() throws IOException {
+		FileManager.getInstance().createFileIfNotExist(_dataFileName);
 	}
 	// somehow take byte array and parse to JSON file.
 	// take JSON file convert to byte array.

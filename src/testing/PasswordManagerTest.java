@@ -3,6 +3,9 @@ package testing;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
 import org.junit.jupiter.api.Test;
 import application.KeyManager;
@@ -10,8 +13,8 @@ import application.Logger;
 import application.PasswordManager;
 
 class PasswordManagerTest {
-	KeyManager km;
-	PasswordManager pm;
+	private KeyManager km;
+	private PasswordManager pm;
 	
 	@Test
 	void test1_new_hashes() throws Exception {
@@ -28,7 +31,7 @@ class PasswordManagerTest {
 		pm.load(); // loads password hash from file
 		byte[] pass = pm.getPasswordHash();
 		
-		Logger.debug(this, "pass == " + new String(pass));
+		Logger.debug(this, "getPass == " + new String(pass));
 		Logger.debug(this, "hash == "+ new String(hash));
 		
 		Logger.debug(this, "Hash to Hex: " + pm.getPasswordHashAsHex());
@@ -46,7 +49,7 @@ class PasswordManagerTest {
 		km.load();
 		byte[] pass = pm.getPasswordHash();
 		byte[] testHash = pm.generatePasswordHash("password".getBytes(), km.getSalt());
-		Logger.debug(this, "pass     == " + new String(pass));
+		Logger.debug(this, "getPass     == " + new String(pass));
 		Logger.debug(this, "testHash == " + new String(testHash));
 		assertEquals(new String(pass), new String(testHash));
 	}
@@ -57,6 +60,22 @@ class PasswordManagerTest {
 
 		PasswordManager pm = PasswordManager.getInstance();
 		assertEquals(true, PasswordManager.getInstance().passwordHashFileExists());
+	}
+
+	@Test
+	void test4_create_hash_restore_hash() throws IOException,
+			NoSuchAlgorithmException, InvalidKeySpecException {
+		Logger.debug(this, "Begin test4_create_hash_restore_hash");
+		KeyManager.getInstance().load();
+		byte[] hashToStore = PasswordManager.getInstance().generatePasswordHash("password".getBytes(),
+				KeyManager.getInstance().getSalt());
+		PasswordManager.getInstance().setPasswordHash(hashToStore);
+		PasswordManager.getInstance().save();
+		byte[] hashToCompare = PasswordManager.getInstance().generatePasswordHash("password".getBytes(),
+				KeyManager.getInstance().getSalt());
+		PasswordManager.getInstance().load();
+		assertEquals(new String(PasswordManager.getInstance().getPasswordHash()),
+				new String(hashToCompare));
 	}
 
 }

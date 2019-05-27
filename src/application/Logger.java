@@ -15,7 +15,7 @@ public class Logger {
 	}
 	
 	public static void log(String message) {
-		System.out.printf("Logger: %s\n", message);
+		System.out.printf("[Logger] %s\n", message);
 	}
 	
 	public static void printLine(String message) {
@@ -27,7 +27,7 @@ public class Logger {
 	}
 
 	public static void debug(Object obj, String message) {
-		if (debugIsOn) System.out.printf("Debugger: %s %s\n", 
+		if (debugIsOn) System.out.printf("[Debugger] [%s] %s\n",
 				obj.getClass().getName(), message);
 	}
 }

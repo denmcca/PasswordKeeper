@@ -1,5 +1,12 @@
 package application;
 
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+
+import java.beans.Transient;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -8,66 +15,62 @@ public class PwData implements Comparable<PwData>, Serializable {
 	private String _login;
 	private String _pass;
 	private String _dateUpdated;
-	
+
 	/** Parameterless Constructor */
 	public PwData() {
 		Logger.debug(this, "constructor");
-		_platform = new String();
-		_login = new String();
-		_pass = new String();
-		_dateUpdated = new String();
 	}
 	
 	/** Constructor with full parameters */
 	public PwData(String platform, String login, String password)
 	{
 		Logger.debug(this, "constructor 2");
-		_platform = new String();
-		_login = new String();
-		_pass = new String();
-		dateUpdated();
-	}
-	
-	/** Accepts string to assign name of platform associated to account info */
-	public void platform(String platform) {
 		_platform = platform;
-		dateUpdated();
+		_login = login;
+		_pass = password;
+		setDateUpdated();
 	}
 	
-	/** Accepts string to assign login/username info to account */
-	public void login(String login) {
+	/** Accepts string to assign name of setPlatform associated to account info */
+	public void setPlatform(String platform) {
+		_platform = platform;
+		setDateUpdated();
+	}
+	
+	/** Accepts string to assign getLogin/username info to account */
+	public void setLogin(String login) {
 		_login = login;
-		dateUpdated();
+		setDateUpdated();
 	}
 	
 	/** Accepts string to assign password to account */
-	public void pass(String password) {
+	public void setPass(String password) {
 		_pass = password;
-		dateUpdated();
+		setDateUpdated();
 	}
 	
 	/** Assigns current time and date to field 
 	 * which keeps track of time and date account info
 	 * last updated */
-	private void dateUpdated() {
-		Logger.debug(this, "dateUpdated");
+	private void setDateUpdated() {
+		Logger.debug(this, "setDateUpdated");
 		_dateUpdated = new Date().toString();
 	}
 	
-	/** Returns string which contains name of platform 
+	/** Returns string which contains name of setPlatform
 	 * associated to account */
-	public String platform() {
+	public String getPlatform() {
 		return _platform;
 	}
 	
-	/** Returns string which contains login/username 
+	/** Returns string which contains getLogin/username
 	 * associated to account */
-	public String login() {
+	public String getLogin() {
 		return _login;
 	}
 	
 	/** Returns string which contains password to account */
-	public String pass() {
+	public String getPass() {
 		return _pass;
 	}
 	
@@ -77,16 +80,32 @@ public class PwData implements Comparable<PwData>, Serializable {
 		Logger.debug(this, "getDateUpdated");
 		return _dateUpdated;
 	}
+
+	public StringProperty platformProperty(){
+		return new SimpleStringProperty(_platform);
+	}
+
+	public StringProperty loginProperty(){
+		return new SimpleStringProperty(_login);
+	}
+
+	public StringProperty passProperty(){
+		return new SimpleStringProperty(_pass);
+	}
+
+	public StringProperty dateUpdatedProperty(){
+		return new SimpleStringProperty(_dateUpdated);
+	}
 	
 	/** Returns formatted string which contains data from 
 	 * account. */
 	public String toString() {
 		Logger.debug(this, "toString");
-		String string = new String();
-		string = "Platform: " + _platform;
-		string += "\nLogin: " + _login;
-		string += "\nPass: " + _pass;
-		string += "\nUpdated: " + _dateUpdated;
+		String string;
+		string = "Platform: " + getPlatform();
+		string += "\nLogin: " + getLogin();
+		string += "\nPass: " + getPass();
+		string += "\nUpdated: " + getDateUpdated();
 		return string;
 	}
 	
@@ -100,16 +119,14 @@ public class PwData implements Comparable<PwData>, Serializable {
 		
 		PwData data = (PwData)obj;
 		
-		if(_platform.equals(data.platform())) {
-		} if (_login.equals(data.login())) {
-			} if (_pass.equals(data.pass())) {
-					return true;
-				} 
+		if(_platform.equals(data.getPlatform()))
+			if (_login.equals(data.getLogin()))
+				return _pass.equals(data.getPass());
 		return false;
 	}
 	
 	/** Accepts object of same class and compares in order of name 
-	 * of platform, login in info, then date updated. Returns 
+	 * of setPlatform, getLogin in info, then date updated. Returns
 	 * according to standard compareTo methods */
 	@Override
 	public int compareTo(PwData pwData) {
@@ -118,9 +135,26 @@ public class PwData implements Comparable<PwData>, Serializable {
 		if ((result = _platform.compareTo(pwData._platform)) == 0) {
 			if ((result = _login.compareTo(pwData._login)) == 0) {
 				// _if_ equal zero will return
-				return _dateUpdated.compareTo(pwData._dateUpdated); 
+				return _dateUpdated.compareTo(pwData._dateUpdated);
 			}
 		}
 		return result; // if not equal integer > or < zero will be return here
 	}
+
+//	private void writeObject(ObjectOutputStream s) throws IOException {
+//		Logger.debug(this, "writeObject");
+//		s.defaultWriteObject();
+//		s.writeUTF(_platform);
+//		s.writeUTF(_login); // can't be null so use getValueSafe that returns empty string if it's null
+//		s.writeUTF(_pass);
+//		s.writeUTF(_dateUpdated);
+//	}
+//
+//	private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+//		_platform = s.readUTF();
+//		_login = s.readUTF();
+//		_pass = s.readUTF();
+//		_dateUpdated = s.readUTF();
+//		// set values in the same order as writeObject()
+//	}
 }
