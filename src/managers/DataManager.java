@@ -21,7 +21,7 @@ import java.util.Vector;
 
 @SuppressWarnings("serial")
 public class DataManager implements Serializable {
-	private static DataManager _dataManager = null;
+	private static DataManager instance = null;
 	private Vector<PwData> _data;
 	private String _dataFileName = "data.storage";
 	
@@ -31,10 +31,10 @@ public class DataManager implements Serializable {
 	}
 	
 	public static DataManager getInstance() {
-		if (_dataManager == null) {
-			_dataManager = new DataManager();
+		if (instance == null) {
+			instance = new DataManager();
 		}
-		return _dataManager;
+		return instance;
 	}
 	
 	public boolean add(PwData data) {
@@ -46,9 +46,6 @@ public class DataManager implements Serializable {
 		}
 		_data.addElement(data);
 		sort();
-//		for (PwData datum : _data){
-//			Logger.log("\n" + datum.toString());
-//		}
 		return true;
 	}
 	
@@ -59,7 +56,7 @@ public class DataManager implements Serializable {
 	
 	public Vector<PwData> findByPlatform(String platform) {
 		Logger.debug(this, "findByPlatform");
-		Vector<PwData>container = new Vector<PwData>();
+		Vector<PwData> container = new Vector<>();
 		for(PwData data : _data) {
 			if (data.getPlatform().equals(platform))
 				container.add(data);
@@ -85,37 +82,47 @@ public class DataManager implements Serializable {
 	
 	/** Converts current DataManager and its state to
 	 * a ready-to-encrypt byte array */
-	private byte[] convertToBytes(DataManager dataManager) throws IOException {
+	private byte[] convertToBytes(DataManager dataManager) {
 		Logger.debug(this, "convertToBytes");
 		ByteArrayOutputStream byteArrayOS = new ByteArrayOutputStream();
-		ObjectOutputStream objectOS = new ObjectOutputStream(byteArrayOS);
-		objectOS.writeObject(dataManager);
-		objectOS.flush();
-		return byteArrayOS.toByteArray();
+		try {
+			ObjectOutputStream objectOS = new ObjectOutputStream(byteArrayOS);
+			objectOS.writeObject(dataManager);
+			objectOS.flush();
+			return byteArrayOS.toByteArray();
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		return null;
 	}
 	
 	/** Accepts decrypted byte array of DataManager object 
 	 * then converts to restore to usable object */
-	private DataManager convertToDataManager(byte[] bytes) throws IOException, ClassNotFoundException {
+	private DataManager convertToDataManager(byte[] bytes) {
 		Logger.debug(this, "convertToDataManager");
 		ByteArrayInputStream byteArrayIS = new ByteArrayInputStream(bytes);
-		ObjectInputStream objectIS = new ObjectInputStream(byteArrayIS);
-		return (DataManager)objectIS.readObject();
+		try {
+			ObjectInputStream objectIS = new ObjectInputStream(byteArrayIS);
+			return (DataManager)objectIS.readObject();
+		} catch (IOException | ClassNotFoundException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		return null;
 	}
 	
 	/** Saves data from data container to disk drive */
-	public void saveData() throws Exception { // TODO: decouple? Only _dataFileName belongs to DataManager
+	public void saveData() { // TODO: decouple? Only _dataFileName belongs to DataManager
 		Logger.debug(this, "saveData");
 		EncryptionManager em = EncryptionManager.getInstance();
-		byte[] data = convertToBytes(_dataManager);
+		byte[] data = convertToBytes(instance);
 		EncryptedPacket encData = em.encrypt(data);
 		FileManager.getInstance().writeData(em.convertToBytes(encData), _dataFileName, false);
 	}
 	
 	/** Retrieves file from disk drive */
-	public void loadData() throws IOException, ClassNotFoundException, BadPaddingException,
-			InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException,
-			NoSuchPaddingException, InvalidAlgorithmParameterException {
+	public void loadData() {
 		Logger.debug(this, "loadData");
 		EncryptionManager em = EncryptionManager.getInstance(); // TODO: decouple
 		byte[] data = FileManager.getInstance().readData(_dataFileName);
@@ -125,7 +132,7 @@ public class DataManager implements Serializable {
 		}
 		Logger.debug(this, "length == " + data.length);
 		data = em.decrypt(em.convertToEncryptedPacket(data));
-		_dataManager._data = convertToDataManager(data)._data;
+		instance._data = convertToDataManager(data)._data;
 		Logger.debug(this, "TIME TO PRINT DECRYPTED DATA!!!");
 		for (Object datum : _data){
 			Logger.log(datum.toString());
@@ -145,16 +152,7 @@ public class DataManager implements Serializable {
 		}
 	}
 
-//	public String getDataFileName(){
-//		return _dataFileName;
-//	}
-//
-//	public boolean dataExists() {
-//		Logger.debug(this, "dataExists");
-//		return FileManager.getInstance().fileExists(_dataFileName);
-//	}
-
-	public void createFileIfNotExist() throws IOException {
+	public void createFileIfNotExist() {
 		FileManager.getInstance().createFileIfNotExist(_dataFileName);
 	}
 	// somehow take byte array and parse to JSON file.

@@ -73,7 +73,7 @@ public class PwData implements Comparable<PwData>, Serializable {
 	
 	/** Returns string which contains time and date when 
 	 * account info last updated */
-	public String getDateUpdated() {
+	private String getDateUpdated() {
 		Logger.debug(this, "getDateUpdated");
 		return _dateUpdated;
 	}
@@ -137,21 +137,4 @@ public class PwData implements Comparable<PwData>, Serializable {
 		}
 		return result; // if not equal integer > or < zero will be return here
 	}
-
-//	private void writeObject(ObjectOutputStream s) throws IOException {
-//		Logger.debug(this, "writeObject");
-//		s.defaultWriteObject();
-//		s.writeUTF(_platform);
-//		s.writeUTF(_login); // can't be null so use getValueSafe that returns empty string if it's null
-//		s.writeUTF(_pass);
-//		s.writeUTF(_dateUpdated);
-//	}
-//
-//	private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
-//		_platform = s.readUTF();
-//		_login = s.readUTF();
-//		_pass = s.readUTF();
-//		_dateUpdated = s.readUTF();
-//		// set values in the same order as writeObject()
-//	}
 }

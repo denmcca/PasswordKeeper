@@ -15,44 +15,29 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import managers.*;
 import utils.Logger;
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 
 // TODO: add edit feature
 // TODO: database!!
 
 public class SceneBuilder {
 
-    private static SceneBuilder _instance;
+    private static SceneBuilder instance;
     private static final String _DOUBLE_CLICK_ROW_TEXT = "DOUBLE-CLICK SELECTION";
     private static final String _REMOVE_BUTTON_TEXT = "Remove";
     private static final String _FILTER_TEXT = "Filter";
     private static final String _PASSWORD_FAILED_MESSAGE = "Password verification failed. Try again.";
 
     private Scene _scene;
-    private StackPane _root_root;
+    private StackPane rootStackPane;
     private Label _messageErrorLabel;
-    private Button _buttonSave;
-    private Button _buttonCancel;
-    private final int _PASSWORD_LENGTH_MIN = 8; // make at least 10 later
     private final String _PASSWORD_TEXT_DEFAULT = "ENTER PASSWORD";
-    private final String _CONFIRM_PASSWORD_TEXT = "CONFIRM PASSWORD";
-    private final String _ENTER_PLATFORM_TEXT = "ENTER PLATFORM NAME";
     private final String _ENTER_LOGIN_TEXT = "ENTER LOGIN";
     private final String _LOGIN_BUTTON_TEXT = "Login";
     private final String _SAVE_BUTTON_TEXT = "Save";
     private final String _CANCEL_BUTTON_TEXT = "Cancel";
-    private final String _PASSWORD_CREATE_MATCH = "Password successfully created.";
     private final String _PASSWORD_CREATE_MISMATCH = "Passwords did not match. Try again or cancel.";
-    private final String _PASSWORD_TOO_SHORT = "Password must contain at least " + _PASSWORD_LENGTH_MIN + " characters!";
-    private final String _CREATE_PASSWORD_TITLE = "Create Password";
     private final String _LOGIN_TITLE = "Login";
     private final String _MAIN_TITLE = "Password Keeper";
-    private final String _ADDER_TITLE = "Enter Credentials";
-    private final String _LOGOUT_BUTTON_TEXT = "Logout";
-    private final String _ADD_BUTTON_TEXT = "Add";
-    private final String _COPY_BUTTON_TEXT = "Copy";
 
     private PwData _selectedItem = new PwData();
     private boolean postponeDataLoad;
@@ -68,22 +53,22 @@ public class SceneBuilder {
     }
 
     public static SceneBuilder getInstance(){
-        if (_instance == null){
-            _instance = new SceneBuilder();
+        if (instance == null){
+            instance = new SceneBuilder();
         }
-        return _instance;
+        return instance;
     }
 
-    public void init(WindowManager window) throws IOException, NoSuchAlgorithmException {
-        _root_root = new StackPane();
-        _root_root.prefHeightProperty().bind(window.getStage().heightProperty());
-        _root_root.prefWidthProperty().bind(window.getStage().widthProperty());
+    public void init(WindowManager window) {
+        rootStackPane = new StackPane();
+        rootStackPane.prefHeightProperty().bind(window.getStage().heightProperty());
+        rootStackPane.prefWidthProperty().bind(window.getStage().widthProperty());
         KeyManager.getInstance().load();
     }
 
     public void addLayer(StackPane layout){
         Logger.debug(this, "addLayer");
-        _root_root.getChildren().add(layout);
+        rootStackPane.getChildren().add(layout);
     }
     // TODO: make this return scene according to scenetype indicated
 
@@ -92,19 +77,20 @@ public class SceneBuilder {
         return _scene;
     }
 
-    public double getWidth(){
+    private double getWidth(){
         Logger.debug(this , "getWidth");
-        return _root_root.getWidth();
+        return rootStackPane.getWidth();
     }
 
-    public double getHeight(){
+    private double getHeight(){
         Logger.debug(this , "getHeight");
-        return _root_root.getHeight();
+        return rootStackPane.getHeight();
     }
 
     // create new login password (first time login)
     public StackPane buildCreatePasswordLayer() {
         Logger.debug(this, "buildCreatePasswordLayer");
+        String _CREATE_PASSWORD_TITLE = "Create Password";
         setTitle(_CREATE_PASSWORD_TITLE);
         StackPane createRoot = new StackPane();
         PasswordField pass1 = new PasswordField();
@@ -113,13 +99,13 @@ public class SceneBuilder {
         PasswordField pass2 = new PasswordField();
         pass2.setPromptText(_PASSWORD_TEXT_DEFAULT);
         _messageErrorLabel = new Label("");
-        _buttonSave = new Button(_SAVE_BUTTON_TEXT);
-        _buttonCancel = new Button(_CANCEL_BUTTON_TEXT);
+        Button saveButton = new Button(_SAVE_BUTTON_TEXT);
+        Button cancelButton = new Button(_CANCEL_BUTTON_TEXT);
 
         // TODO: figure out how to assign window title
 //        buttonSave.setMnemonicParsing(true);
 
-        _buttonSave.setOnAction(ae -> {
+        saveButton.setOnAction(ae -> {
             if (submitPasswordIfValid(pass1.getText(), pass2.getText(), createRoot)) {
                 backToMain();
                 prepareKey(pass1.getText().getBytes());
@@ -129,11 +115,9 @@ public class SceneBuilder {
             updateErrorMessage(_PASSWORD_CREATE_MISMATCH);
         });
 
-        _buttonSave.setDefaultButton(true);
+        saveButton.setDefaultButton(true);
 
-        _buttonCancel.setOnAction(ae -> {
-            exitProgram();
-        });
+        cancelButton.setOnAction(ae -> exitProgram());
 
         // TODO: get size attributes from window
         _messageErrorLabel.prefHeightProperty().bind(createRoot.heightProperty().divide(5));
@@ -152,11 +136,11 @@ public class SceneBuilder {
 
         VBox.setMargin(pass1, new Insets(0,10,10,10));
         VBox.setMargin(pass2, new Insets(10,10,10,10));
-        HBox.setMargin(_buttonSave, new Insets(10,10,10,10));
-        HBox.setMargin(_buttonCancel, new Insets(10,10,10,10));
+        HBox.setMargin(saveButton, new Insets(10,10,10,10));
+        HBox.setMargin(cancelButton, new Insets(10,10,10,10));
         VBox.setMargin(_messageErrorLabel, new Insets(10,10,10,10));
         layoutBase.getChildren().addAll(layoutBanner, pass1, pass2);
-        layoutSub.getChildren().addAll(_buttonSave, _buttonCancel);
+        layoutSub.getChildren().addAll(saveButton, cancelButton);
         layoutBase.getChildren().addAll(layoutSub, _messageErrorLabel);
         createRoot.getChildren().add(layoutBase);
         createRoot.setAlignment(Pos.CENTER);
@@ -170,6 +154,8 @@ public class SceneBuilder {
         Logger.debug(this, "buildLoginLayer");
         setTitle(_LOGIN_TITLE);
         StackPane loginRoot = new StackPane();
+        loginRoot.setMaxSize(480, 300);
+        loginRoot.setPrefSize(rootStackPane.widthProperty().doubleValue(), rootStackPane.heightProperty().doubleValue());
         Label header = new Label();
         header.setMinHeight(100);
         PasswordField pass = new PasswordField();
@@ -182,10 +168,10 @@ public class SceneBuilder {
         Button exitButton = new Button("Exit");
         anchorPane.getChildren().addAll(loginButton, exitButton);
 
-        loginButton.prefHeightProperty().bind(_root_root.heightProperty().divide(6));
-        loginButton.prefWidthProperty().bind(_root_root.widthProperty().divide(6));
-        exitButton.prefHeightProperty().bind(_root_root.heightProperty().divide(6));
-        exitButton.prefWidthProperty().bind(_root_root.widthProperty().divide(6));
+        loginButton.prefHeightProperty().bind(rootStackPane.heightProperty().divide(6));
+        loginButton.prefWidthProperty().bind(rootStackPane.widthProperty().divide(6));
+        exitButton.prefHeightProperty().bind(rootStackPane.heightProperty().divide(6));
+        exitButton.prefWidthProperty().bind(rootStackPane.widthProperty().divide(6));
 
         exitButton.setFont(Font.font(12+exitButton.getWidth()/100));
 
@@ -228,6 +214,7 @@ public class SceneBuilder {
         HBox.setMargin(exitButton, new Insets(10,10,10,10));
         VBox.setMargin(loginMessageLabel, new Insets(10,10,10,10));
 
+        layoutBase.prefWidthProperty().bind(loginRoot.widthProperty().divide(2f));
         layoutSub.getChildren().addAll(loginButton, exitButton);
         layoutBase.getChildren().addAll(header, pass, layoutSub, loginMessageLabel);
 
@@ -238,19 +225,9 @@ public class SceneBuilder {
         return loginRoot;
     }
 
+    //
     private void loginInitializeData(byte[] pass) {
         Logger.log("Password is correct!"); // set scene to password manager
-        try {
-            LoginManager.getInstance()
-                    .sendPasswordToKeyManager(pass);
-        } catch (InvalidKeySpecException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         prepareKey(pass);
         loadData();
         updateTable();
@@ -285,10 +262,13 @@ public class SceneBuilder {
 
         // Nodes to exist on panel
         TextField filterField = new TextField();
+        String _ADD_BUTTON_TEXT = "Add";
         Button addButton = new Button(_ADD_BUTTON_TEXT);
         Button removeButton = new Button(_REMOVE_BUTTON_TEXT);
         Label passwordLabel = new Label();
+        String _COPY_BUTTON_TEXT = "Copy";
         Button copyButton = new Button(_COPY_BUTTON_TEXT);
+        String _LOGOUT_BUTTON_TEXT = "Logout";
         Button logoutButton = new Button(_LOGOUT_BUTTON_TEXT);
 
         //
@@ -379,18 +359,21 @@ public class SceneBuilder {
     // layer which provides an interface where users can enter platform info and credentials
     private StackPane buildAdder() {
         Logger.debug(this, "buildAdder");
+        String _ADDER_TITLE = "Enter Credentials";
         setTitle(_ADDER_TITLE);
         StackPane adderRoot = new StackPane();
-        adderRoot.setPrefSize(adderRoot.getWidth(), adderRoot.getHeight());
+        adderRoot.setPrefSize(rootStackPane.getWidth(), rootStackPane.getHeight());
         adderRoot.setPadding(new Insets(10,10,10,10));
 
         TextField platformField = new TextField();
+        String _ENTER_PLATFORM_TEXT = "ENTER PLATFORM NAME";
         platformField.setPromptText(_ENTER_PLATFORM_TEXT);
         TextField loginField = new TextField();
         loginField.setPromptText(_LOGIN_BUTTON_TEXT);
         TextField passwordField = new TextField();
         passwordField.setPromptText(_PASSWORD_TEXT_DEFAULT);
         TextField passwordConfirmField = new TextField();
+        String _CONFIRM_PASSWORD_TEXT = "CONFIRM PASSWORD";
         passwordConfirmField.setPromptText(_CONFIRM_PASSWORD_TEXT);
 
         VBox nodeColumn = new VBox();
@@ -399,7 +382,9 @@ public class SceneBuilder {
 
         Button saveButton = new Button(_SAVE_BUTTON_TEXT);
         saveButton.setDefaultButton(true);
+        saveButton.setPrefSize(adderRoot.getPrefWidth() / 6, adderRoot.getPrefHeight() / 10);
         Button cancelButton = new Button(_CANCEL_BUTTON_TEXT);
+        cancelButton.setPrefSize(adderRoot.getPrefWidth() / 6, adderRoot.getPrefHeight() / 10);
 
         HBox.setMargin(saveButton, new Insets(0,10,0,10));
         HBox.setMargin(cancelButton, new Insets(0,10,0,10));
@@ -465,9 +450,9 @@ public class SceneBuilder {
         UserInterfaceManager.getInstance().getWindowManager().setTitle(title);
     }
 
-    private void prepareKey(byte[] bytes) {
+    private void prepareKey(byte[] password) {
         try {
-            LoginManager.getInstance().sendPasswordToKeyManager(bytes);
+            LoginManager.getInstance().sendPasswordManagerPassword(password);
         } catch (Exception e) {
             Logger.debug(this, "ERROR: Session key assignment failed!");
             e.printStackTrace();
@@ -492,9 +477,9 @@ public class SceneBuilder {
     }
 
     private void removeLayer(StackPane surfaceRootNode) {
-        _root_root.getChildren().remove(surfaceRootNode);
-        StackPane pane = (StackPane)_root_root.getChildren()
-                .toArray()[_root_root.getChildren().size() - 1];
+        rootStackPane.getChildren().remove(surfaceRootNode);
+        StackPane pane = (StackPane) rootStackPane.getChildren()
+                .toArray()[rootStackPane.getChildren().size() - 1];
         pane.setVisible(true);
     }
 
@@ -574,19 +559,25 @@ public class SceneBuilder {
         _selectedItem = item;
     }
 
-    /** Compares password entered at login layout with stored password hash */
+    /**
+        Compares password entered at login layout with stored password hash
+    */
     private boolean isPasswordCorrect(String password) throws Exception {
         Logger.debug(this, "loginIfPasswordCorrect");
-        return PasswordManager.getInstance().verifyPassword(password.getBytes());
+        return LoginManager.getInstance().attemptLogin(password.getBytes());
     }
 
     private boolean submitPasswordIfValid(String password1, String password2, StackPane createRoot) {
         Logger.debug(this, "submitPasswordIfValid");
 
         if (compareCreatedPassword(password1, password2)){
+            // make at least 10 later
+            int _PASSWORD_LENGTH_MIN = 8;
             if (password1.length() < _PASSWORD_LENGTH_MIN) {
+                String _PASSWORD_TOO_SHORT = "Password must contain at least " + _PASSWORD_LENGTH_MIN + " characters!";
                 updateErrorMessage(_PASSWORD_TOO_SHORT);
             } else {
+                String _PASSWORD_CREATE_MATCH = "Password successfully created.";
                 updateErrorMessage(_PASSWORD_CREATE_MATCH);
                 try {
 
@@ -605,10 +596,9 @@ public class SceneBuilder {
         _messageErrorLabel.setText(message);
     }
 
-    private void submitCreatedPassword(String pass) throws IOException,
-            InvalidKeySpecException, NoSuchAlgorithmException {
+    private void submitCreatedPassword(String pass) {
         Logger.debug(this, "submitCreatedPassword");
-        LoginManager.getInstance().createAssignPasswordHash(pass.getBytes());
+        LoginManager.getInstance().setPasswordHash(pass.getBytes());
         LoginManager.getInstance().savePasswordHashFile();
         PasswordManager.getInstance().save();
     }
@@ -626,7 +616,7 @@ public class SceneBuilder {
     }
 
     public void createScene() {
-        _scene = new Scene(_root_root, getWidth(), getHeight());
+        _scene = new Scene(rootStackPane, getWidth(), getHeight());
     }
 
     public void postponeDataLoad(boolean doPostpone) {
@@ -636,7 +626,7 @@ public class SceneBuilder {
     /** Removes given */
     private void backToMain() {
         Logger.debug(this, "backToMain");
-        removeLayer((StackPane)_root_root.getChildren().toArray()[_root_root.getChildren().size() - 1]);
+        removeLayer((StackPane) rootStackPane.getChildren().toArray()[rootStackPane.getChildren().size() - 1]);
         setTitle(_MAIN_TITLE);
     }
 

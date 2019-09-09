@@ -3,14 +3,13 @@ package testing;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
-import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
 import org.junit.jupiter.api.Test;
-import application.KeyManager;
-import application.Logger;
-import application.PasswordManager;
+import managers.KeyManager;
+import utils.Logger;
+import managers.PasswordManager;
 
 class PasswordManagerTest {
 	private KeyManager km;
@@ -55,7 +54,7 @@ class PasswordManagerTest {
 	}
 	
 	@Test
-	void test2_password_hash_file_exists() throws Exception {
+	void test2_password_hash_file_exists() {
 		Logger.debug(this, "Begin test_password_hash_file_exists");
 
 		PasswordManager pm = PasswordManager.getInstance();
@@ -63,8 +62,7 @@ class PasswordManagerTest {
 	}
 
 	@Test
-	void test4_create_hash_restore_hash() throws IOException,
-			NoSuchAlgorithmException, InvalidKeySpecException {
+	void test4_create_hash_restore_hash() {
 		Logger.debug(this, "Begin test4_create_hash_restore_hash");
 		KeyManager.getInstance().load();
 		byte[] hashToStore = PasswordManager.getInstance().generatePasswordHash("password".getBytes(),

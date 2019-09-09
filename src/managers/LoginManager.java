@@ -3,86 +3,104 @@ package managers;
 import utils.Logger;
 
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 
 public class LoginManager {
-	private static LoginManager _loginManager = null;
-	private KeyManager keym;
-	private PasswordManager passm;
-	private byte[] _pHash;
+	private static LoginManager instance = null;
+	private PasswordManager passwordManager;
+	private boolean isLoggedIn;
 	
-	private LoginManager() throws IOException, NoSuchAlgorithmException {
-
+	private LoginManager() {
 		Logger.debug(this, "constructor");
-		keym = KeyManager.getInstance();
-		passm = PasswordManager.getInstance();
+		isLoggedIn = false;
+		passwordManager = PasswordManager.getInstance();
 	}
-	
-	public static LoginManager getInstance()
-			throws IOException, NoSuchAlgorithmException {
-		if (_loginManager == null) {
-			_loginManager = new LoginManager();
+
+	/**
+	 * Singleton
+	 */
+	public static LoginManager getInstance() {
+		if (instance == null) {
+			instance = new LoginManager();
 		}
-		return _loginManager;
+		return instance;
 	}
 	
 	public void init() {
 //		_pHash = getPasswordHash();
 		
 	}
-	
-	public void createAssignPasswordHash(byte[] password)
-			throws InvalidKeySpecException, NoSuchAlgorithmException,
-			IOException {
-		Logger.debug(this, "createPasswordHash");
-		passm.setPasswordHash(passm.generatePasswordHash(password, keym.getSalt()));
-	}
-	
-	public void sendPasswordToKeyManager(byte[] password) throws InvalidKeySpecException, NoSuchAlgorithmException {
-		Logger.debug(this, "sendPasswordToKeyManager");
-		keym.receiveUserPassword(password);
+
+	/**
+	 * Sets user as logged in, and sends password to key manager.
+	 * */
+	private void login(byte[] pass) {
+		isLoggedIn = true;
+		sendPasswordManagerPassword(pass);
 	}
 
-	// Checks if hash file exists
-	public boolean isFirstTimeLogin() throws IOException {
+	/**
+	 * Sends password password manager to verify user entered password during login.
+	 * Returns true if user was logged in.
+	 * */
+	public boolean attemptLogin(byte[] pass) {
+		if (isPasswordCorrect(pass)) {
+			Logger.debug(this, "password was correct");
+			login(pass);
+			return true;
+		}
+		Logger.debug(this, "password was incorrect");
+		return false;
+	}
+
+	/**
+	 * Accesses Password Manager to check if given password is correct.
+	 * Returns true if password is correct.
+	 * */
+	private boolean isPasswordCorrect(byte[] pass) {
+		return passwordManager.verifyPassword(pass);
+	}
+
+	/**
+	 * Sends password to Password Manager to create password hash.
+	 * */
+	public void setPasswordHash(byte[] password) {
+		Logger.debug(this, "createPasswordHash");
+		passwordManager.setPasswordHash(password);
+	}
+
+	/**
+	 * Sends user entered password to Password Manager.
+	 * Note: Password Manager does not keep copy of password, instead sends it to Key Manager.
+	 * */
+	public void sendPasswordManagerPassword(byte[] password) {
+		Logger.debug(this, "sendPasswordToKeyManager");
+		passwordManager.receiveUserPassword(password);
+	}
+
+	/**
+	 * Checks if hash file exists
+	 * Returns true if exists.
+	 * */
+	public boolean isFirstTimeLogin() {
 		Logger.debug(this, "isFirstTimeLogin");
 		Logger.debug(this, "Password hash exists: "
 				+ PasswordManager.getInstance().passwordHashFileExists().toString());
 		return !PasswordManager.getInstance().passwordHashFileExists();
 	}
 
-	// Loads password hash from file
-	public void loadPasswordHashFile() throws IOException {
+	/**
+	 * Loads password hash from file
+	 * */
+	public void loadPasswordHashFile() {
 		PasswordManager.getInstance().load();
 	}
 
-	public void savePasswordHashFile() throws IOException {
+	public void savePasswordHashFile() {
 		Logger.debug(this, "savePasswordHashFile");
 		PasswordManager.getInstance().save();
 	}
 
-
-	
-//	private byte[] getPasswordHash() {
-//		// if hash file does not exist
-//			// createPasswordHash()
-//		
-//		return PasswordManager.getInstance().getPasswordHash();
-//	}
-
-	// Public interface hashes given password and compares with hash file.
-	public boolean doesPasswordMatch(String password) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-		Logger.debug(this, "doesPasswordMatch");
-		byte[] passHash = passm.generatePasswordHash(password.getBytes(), keym.getSalt());
-		return PasswordManager.getInstance().verifyPassword(passHash);
-	}
-	
-	private void createHint() {
-		
-	}
-	
-	private void getHint() {
-		
+	public boolean isLoggedIn() {
+		return isLoggedIn;
 	}
 }

@@ -4,7 +4,7 @@ import utils.Logger;
 import components.SceneBuilder;
 
 public class UserInterfaceManager {
-	private static UserInterfaceManager _instance;
+	private static UserInterfaceManager instance;
 	private WindowManager _windowManager;
 
 /**
@@ -18,9 +18,9 @@ public class UserInterfaceManager {
 	}
 
 	public static UserInterfaceManager getInstance() {
-		if (_instance == null) {
-			_instance = new UserInterfaceManager();
-		} return _instance;
+		if (instance == null) {
+			instance = new UserInterfaceManager();
+		} return instance;
 	}
 
 	public void init() {

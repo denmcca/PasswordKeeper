@@ -1,7 +1,8 @@
 package testing;
 
-import application.*;
+import managers.*;
 import org.junit.jupiter.api.Test;
+import utils.Logger;
 
 class UserInterfaceTest {
 
@@ -15,7 +16,7 @@ class UserInterfaceTest {
 	}
 
 	@Test
-	void test_launch_window_password_manager() throws Exception {
+	void test_launch_window_password_manager() {
 
 		Logger.debug(this, "test_launch_window_password_manager");
 		EncryptionManager.getInstance();

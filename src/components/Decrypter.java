@@ -20,13 +20,17 @@ public class Decrypter {
 	
 	private Decrypter() {}
 	
-	private void init(byte[] iv) throws NoSuchPaddingException,
-			NoSuchAlgorithmException, IOException,
-			InvalidAlgorithmParameterException, InvalidKeyException {
+	private void init(byte[] iv) {
 		Logger.debug(this, "init");
-		_cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+		try {
+			_cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+			_cipher.init(Cipher.DECRYPT_MODE, KeyManager.getInstance().getSessionKey(), new IvParameterSpec(iv));
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException |
+				InvalidAlgorithmParameterException | InvalidKeyException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
 		Logger.debug(this,"Session Key Format: " + KeyManager.getInstance().getSessionKey().getFormat());
-		_cipher.init(Cipher.DECRYPT_MODE, KeyManager.getInstance().getSessionKey(), new IvParameterSpec(iv));
 	}
 	
 	public static Decrypter getInstance() {
@@ -36,12 +40,16 @@ public class Decrypter {
 		return _decrypter;
 	}
 	
-	public byte[] decrypt(EncryptedPacket input)
-			throws BadPaddingException, IllegalBlockSizeException,
-			InvalidAlgorithmParameterException, NoSuchAlgorithmException,
-			InvalidKeyException, NoSuchPaddingException, IOException {
+	public byte[] decrypt(EncryptedPacket input) {
 		Logger.debug(this, "decrypt");
 		init(input.getIV());
-		return _cipher.doFinal(input.getData());
+		byte[] bytes = null;
+		try {
+			bytes = _cipher.doFinal(input.getData());
+		} catch (IllegalBlockSizeException | BadPaddingException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		return bytes;
 	}
 }

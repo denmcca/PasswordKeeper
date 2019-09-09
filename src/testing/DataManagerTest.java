@@ -2,8 +2,12 @@ package testing;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import application.*;
+import components.PwData;
+import managers.DataManager;
+import managers.KeyManager;
+import managers.LoginManager;
 import org.junit.jupiter.api.Test;
+import utils.Logger;
 
 
 class DataManagerTest {
@@ -30,7 +34,7 @@ class DataManagerTest {
 		km = KeyManager.getInstance();
 		populateDataManager();
 		km.load();
-		lm.sendPasswordToKeyManager("password".getBytes());
+		lm.sendPasswordManagerPassword("password".getBytes());
 		dm.saveData();
 		dm.loadData();
 		for (PwData data : dm.getAllData()) {
@@ -46,7 +50,7 @@ class DataManagerTest {
 		km = KeyManager.getInstance();
 		km.getSalt();
 		lm = LoginManager.getInstance();
-		lm.sendPasswordToKeyManager("password".getBytes());
+		lm.sendPasswordManagerPassword("password".getBytes());
 		dm = DataManager.getInstance();
 		populateDataManager();
 		dm.saveData();
@@ -58,7 +62,7 @@ class DataManagerTest {
 		km = KeyManager.getInstance();
 		km.load();
 		lm = LoginManager.getInstance();
-		lm.sendPasswordToKeyManager("password".getBytes());
+		lm.sendPasswordManagerPassword("password".getBytes());
 		dm = DataManager.getInstance();
 		dm.loadData();
 		for (PwData data : dm.getAllData()) {
@@ -73,7 +77,7 @@ class DataManagerTest {
 		km = KeyManager.getInstance();
 		km.load();
 		lm = LoginManager.getInstance();
-		lm.sendPasswordToKeyManager("password".getBytes());
+		lm.sendPasswordManagerPassword("password".getBytes());
 		dm = DataManager.getInstance();
 		dm.loadData();
 		for (PwData data : dm.getAllData()) {
@@ -103,7 +107,7 @@ class DataManagerTest {
 		dm = DataManager.getInstance();
 		this.initiateKeyLoginManager();
 		km.load();
-		lm.sendPasswordToKeyManager("password".getBytes());
+		lm.sendPasswordManagerPassword("password".getBytes());
 		dm.loadData();
 		dm.add(this.createCredential("a", "b", "c"));
 		dm.add(this.createCredential("a", "b", "c"));
@@ -149,10 +153,10 @@ class DataManagerTest {
 		}
 	}
 	
-	private void initiateKeyLoginManager() throws Exception {
+	private void initiateKeyLoginManager() {
 		Logger.debug(this,"initiateKeyLoginManager");
 		km.load();
-		lm.sendPasswordToKeyManager("password".getBytes());
+		lm.sendPasswordManagerPassword("password".getBytes());
 	}
 	
 	private void printDataManagerData() {

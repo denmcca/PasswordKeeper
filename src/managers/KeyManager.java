@@ -19,29 +19,28 @@ public class KeyManager {
 	private final String factoryAlgo = "PBKDF2WithHmacSHA1";
 	private final String secretKeySpecAlgo = "AES";
 	
-	private static KeyManager _keyManager = null;
+	private static KeyManager instance = null;
 	private KeyStore keyStore = null; // TODO: implement KeyStore to store keys
 	private SecretKey _sessionKey;
 	private byte[] _salt = null;
 	private String _saltFileName = "salt.storage";
 	
 	/** Constructor for Singleton KeyManager */
-	private KeyManager() throws IOException, NoSuchAlgorithmException {
+	private KeyManager() {
 		Logger.debug(this, "constructor");
 		load();
 	}
 	
 	/** Returns only instance of KeyManager */
-	public static KeyManager getInstance() throws IOException,
-			NoSuchAlgorithmException {
-		if (_keyManager == null) {
-			_keyManager = new KeyManager();
+	public static KeyManager getInstance() {
+		if (instance == null) {
+			instance = new KeyManager();
 		}
-		return _keyManager;
+		return instance;
 	}
 	
 	/** Call function to load salt from file if current salt is null.*/
-	public void load() throws IOException, NoSuchAlgorithmException {
+	public void load() {
 		Logger.debug(this, "load");
 		if (_salt == null) {
 			loadSalt();
@@ -50,7 +49,7 @@ public class KeyManager {
 	
 	/** Calls function to save current salt to file. If current salt 
 	 * is null, salt will be generated.*/
-	public void save() throws Exception{
+	public void save() {
 		Logger.debug(this, "save");
 		if (_salt == null) {
 			_salt = generateSalt();
@@ -59,7 +58,7 @@ public class KeyManager {
 	}
 	
 	/** Gets salt from file. Throws IOException if not found */
-	private void loadSalt() throws IOException, NoSuchAlgorithmException {
+	private void loadSalt() {
 		Logger.debug(this, "loadSalt");
 		if (!FileManager.getInstance().fileExists(_saltFileName)){
 			_salt = generateSalt();
@@ -69,75 +68,106 @@ public class KeyManager {
 		}
 	}
 
-	private void createSalt() throws IOException, NoSuchAlgorithmException {
+	private void createSalt() {
 		Logger.debug(this, "Salt file not found. Generating new salt.");
 		_salt = generateSalt();
 		saveSalt();
 	}
 
-	/** Saves current salt to file if current salt is not null */
-	private void saveSalt() throws IOException {
+	/**
+	 * Saves current salt to file if current salt is not null
+	 * */
+	private void saveSalt() {
 		Logger.debug(this, "saveSalt");
 		FileManager.getInstance().writeData(_salt, _saltFileName, false);
 	}
 	
-	/** Takes in password and calls function to generate new key
-	 * then sets key as current session key.*/
-	private void assignSessionKey(byte[] password) throws InvalidKeySpecException, NoSuchAlgorithmException {
+	/**
+	 * Takes in password and calls function to generate new key
+	 * then sets key as current session key.
+	 * */
+	private void assignSessionKey(byte[] password) {
 		Logger.debug(this, "assignSessionKey");
 		setSessionKey(generateKey(password));
 	}
 	
-	/** Accepts SecretKey and assigns as session key.*/
+	/**
+	 * Accepts SecretKey and assigns as session key.
+	 **/
 	private void setSessionKey(SecretKey sKey) {
 		Logger.debug(this, "setSessionKey");
 		_sessionKey = sKey;
 	}
 	
-	/** Accepts password and generates secret key 
-	 * using PBKDF2WithHmacSHA1 and AES.*/
-	public SecretKey generateKey(byte[] password) throws NoSuchAlgorithmException, InvalidKeySpecException {
+	/**
+	 * Accepts password and generates secret key
+	 * using PBKDF2WithHmacSHA1 and AES.
+	 * */
+	public SecretKey generateKey(byte[] password) {
 		Logger.debug(this, "generateKey");
-		SecretKeyFactory skf = SecretKeyFactory.getInstance(factoryAlgo);
-		KeySpec spec = new PBEKeySpec(
-				(new String(password)).toCharArray(), 
-				_salt,
-				iterationCount, keyLength);
-		SecretKey sKey = skf.generateSecret(spec);
-		return new SecretKeySpec(sKey.getEncoded(), secretKeySpecAlgo);
+		SecretKey sKeyEnc = null;
+		try {
+			SecretKeyFactory skf = SecretKeyFactory.getInstance(factoryAlgo);
+			KeySpec spec = new PBEKeySpec(
+					(new String(password)).toCharArray(),
+					_salt, iterationCount, keyLength);
+			SecretKey sKey = skf.generateSecret(spec);
+			sKeyEnc = new SecretKeySpec(sKey.getEncoded(), secretKeySpecAlgo);
+		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		return sKeyEnc;
 	}
 	
-	/** Returns current session key. Throws NullPointerException if null */
+	/**
+	 * Returns current session key. Throws NullPointerException if null
+	 * */
 	public SecretKey getSessionKey() {
 		Logger.debug(this, "getSessionKey");
 		if (_sessionKey == null) throw new NullPointerException();
 		return _sessionKey;
 	}
 	
-	/** Accepts password and calls method that to generate secret key
-	 * and assign it as current session key.*/
-	public void receiveUserPassword(byte[] password) throws InvalidKeySpecException, NoSuchAlgorithmException {
+	/**
+	 * Accepts password and calls method that to generate secret key
+	 * and assign it as current session key.
+	 * */
+	public void receiveUserPassword(byte[] password) {
 		Logger.debug(this, "receiveUserPassword");
 		assignSessionKey(password);
 	}
 	
-	/** Gets salt using random generator.*/
-	public byte[] generateSalt() throws NoSuchAlgorithmException {
+	/**
+	 * Gets salt using random generator.
+	 * */
+	public byte[] generateSalt() {
 		Logger.debug(this, "generateSalt");
-		SecureRandom secRan = SecureRandom.getInstance("SHA1PRNG");
+		SecureRandom secRan = null;
+		try {
+			secRan = SecureRandom.getInstance("SHA1PRNG");
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+
 		byte [] salt = new byte[16];
 		secRan.nextBytes(salt);
 		return salt;
 	}
-	
-	/** Accepts salt and sets it as current salt.*/
+
+	/**
+	 * Accepts salt and sets it as current salt.
+	 * */
 	public void setSalt(byte[] salt) {
 		Logger.debug(this, "setSalt");
 		_salt = salt;
 	}
 	
-	/** Returns current salt.*/
-	public byte[] getSalt() throws IOException, NoSuchAlgorithmException {
+	/**
+	 * Returns existing salt.
+	 * */
+	public byte[] getSalt() {
 		Logger.debug(this, "getSalt");
 		if (!FileManager.getInstance().fileExists(_saltFileName)){
 			_salt = generateSalt();
@@ -148,6 +178,5 @@ public class KeyManager {
 		}
 		return _salt;
 	}
-	
 }
 
